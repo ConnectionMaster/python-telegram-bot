@@ -16,11 +16,10 @@
 #
 # You should have received a copy of the GNU Lesser Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
-
 import pytest
 
 from telegram import Update, User, ShippingAddress, ShippingQuery, Bot
-from tests.conftest import check_shortcut_call, check_shortcut_signature
+from tests.conftest import check_shortcut_call, check_shortcut_signature, check_defaults_handling
 
 
 @pytest.fixture(scope='class')
@@ -39,6 +38,15 @@ class TestShippingQuery:
     invoice_payload = 'invoice_payload'
     from_user = User(0, '', False)
     shipping_address = ShippingAddress('GB', '', 'London', '12 Grimmauld Place', '', 'WC1')
+
+    def test_slot_behaviour(self, shipping_query, recwarn, mro_slots):
+        inst = shipping_query
+        for attr in inst.__slots__:
+            assert getattr(inst, attr, 'err') != 'err', f"got extra slot '{attr}'"
+        assert not inst.__dict__, f"got missing slot(s): {inst.__dict__}"
+        assert len(mro_slots(inst)) == len(set(mro_slots(inst))), "duplicate slot"
+        inst.custom, inst.id = 'should give warning', self.id_
+        assert len(recwarn) == 1 and 'custom' in str(recwarn[0].message), recwarn.list
 
     def test_de_json(self, bot):
         json_dict = {
@@ -65,16 +73,16 @@ class TestShippingQuery:
         assert shipping_query_dict['shipping_address'] == shipping_query.shipping_address.to_dict()
 
     def test_answer(self, monkeypatch, shipping_query):
-        answer_shipping_query = shipping_query.bot.answer_shipping_query
-
         def make_assertion(*_, **kwargs):
-            return kwargs['shipping_query_id'] == shipping_query.id and check_shortcut_call(
-                kwargs, answer_shipping_query
-            )
+            return kwargs['shipping_query_id'] == shipping_query.id
 
         assert check_shortcut_signature(
             ShippingQuery.answer, Bot.answer_shipping_query, ['shipping_query_id'], []
         )
+        assert check_shortcut_call(
+            shipping_query.answer, shipping_query.bot, 'answer_shipping_query'
+        )
+        assert check_defaults_handling(shipping_query.answer, shipping_query.bot)
 
         monkeypatch.setattr(shipping_query.bot, 'answer_shipping_query', make_assertion)
         assert shipping_query.answer(ok=True)

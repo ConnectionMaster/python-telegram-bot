@@ -20,15 +20,16 @@
 """This module contains the RegexHandler class."""
 
 import warnings
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Pattern, TypeVar, Union
+from typing import TYPE_CHECKING, Callable, Dict, Optional, Pattern, TypeVar, Union, Any
 
 from telegram import Update
 from telegram.ext import Filters, MessageHandler
 from telegram.utils.deprecate import TelegramDeprecationWarning
 from telegram.utils.helpers import DefaultValue, DEFAULT_FALSE
+from telegram.ext.utils.types import CCT
 
 if TYPE_CHECKING:
-    from telegram.ext import CallbackContext, Dispatcher
+    from telegram.ext import Dispatcher
 
 RT = TypeVar('RT')
 
@@ -108,10 +109,12 @@ class RegexHandler(MessageHandler):
 
     """
 
+    __slots__ = ('pass_groups', 'pass_groupdict')
+
     def __init__(
         self,
         pattern: Union[str, Pattern],
-        callback: Callable[[Update, 'CallbackContext'], RT],
+        callback: Callable[[Update, CCT], RT],
         pass_groups: bool = False,
         pass_groupdict: bool = False,
         pass_update_queue: bool = False,
@@ -149,7 +152,11 @@ class RegexHandler(MessageHandler):
         dispatcher: 'Dispatcher',
         update: Update = None,
         check_result: Optional[Union[bool, Dict[str, Any]]] = None,
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, object]:
+        """Pass the results of ``re.match(pattern, text).{groups(), groupdict()}`` to the
+        callback as a keyword arguments called ``groups`` and ``groupdict``, respectively, if
+        needed.
+        """
         optional_args = super().collect_optional_args(dispatcher, update, check_result)
         if isinstance(check_result, dict):
             if self.pass_groups:

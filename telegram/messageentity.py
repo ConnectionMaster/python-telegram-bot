@@ -33,7 +33,7 @@ class MessageEntity(TelegramObject):
     usernames, URLs, etc.
 
     Objects of this class are comparable in terms of equality. Two objects of this class are
-    considered equal, if their :attr:`type`, :attr:`offset` and :attr`length` are equal.
+    considered equal, if their :attr:`type`, :attr:`offset` and :attr:`length` are equal.
 
     Args:
         type (:obj:`str`): Type of the entity. Can be mention (@username), hashtag, bot_command,
@@ -59,6 +59,8 @@ class MessageEntity(TelegramObject):
 
     """
 
+    __slots__ = ('length', 'url', 'user', 'type', 'language', 'offset', '_id_attrs')
+
     def __init__(
         self,
         type: str,  # pylint: disable=W0622
@@ -82,7 +84,8 @@ class MessageEntity(TelegramObject):
 
     @classmethod
     def de_json(cls, data: Optional[JSONDict], bot: 'Bot') -> Optional['MessageEntity']:
-        data = cls.parse_data(data)
+        """See :meth:`telegram.TelegramObject.de_json`."""
+        data = cls._parse_data(data)
 
         if not data:
             return None

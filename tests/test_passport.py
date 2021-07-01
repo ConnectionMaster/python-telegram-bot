@@ -31,27 +31,12 @@ from telegram import (
     TelegramDecryptionError,
 )
 
-# Generated using the scope:
-# {
-#   data: [
-#     {
-#       type: 'personal_details',
-#       native_names: true
-#     },
-#     {
-#       type: 'id_document',
-#       selfie: true,
-#       translation: true
-#     },
-#     {
-#       type: 'address_document',
-#       translation: true
-#     },
-#     'address',
-#     'email'
-#   ],
-#   v: 1
-# }
+
+# Note: All classes in telegram.credentials (except EncryptedCredentials) aren't directly tested
+# here, although they are implicitly tested. Testing for those classes was too much work and not
+# worth it.
+
+
 RAW_PASSPORT_DATA = {
     'credentials': {
         'hash': 'qB4hz2LMcXYhglwz6EvXMMyI3PURisWLXl/iCmCXcSk=',
@@ -229,6 +214,15 @@ class TestPassport:
     utility_bill_translation_2_file_unique_id = 'f008ca48c44b4a47895ddbcd2f76741e'
     driver_license_selfie_credentials_file_hash = 'Cila/qLXSBH7DpZFbb5bRZIRxeFW2uv/ulL0u0JNsYI='
     driver_license_selfie_credentials_secret = 'tivdId6RNYNsvXYPppdzrbxOBuBOr9wXRPDcCvnXU7E='
+
+    def test_slot_behaviour(self, passport_data, mro_slots, recwarn):
+        inst = passport_data
+        for attr in inst.__slots__:
+            assert getattr(inst, attr, 'err') != 'err', f"got extra slot '{attr}'"
+        assert not inst.__dict__, f"got missing slot(s): {inst.__dict__}"
+        assert len(mro_slots(inst)) == len(set(mro_slots(inst))), "duplicate slot"
+        inst.custom, inst.data = 'should give warning', passport_data.data
+        assert len(recwarn) == 1 and 'custom' in str(recwarn[0].message), recwarn.list
 
     def test_creation(self, passport_data):
         assert isinstance(passport_data, PassportData)

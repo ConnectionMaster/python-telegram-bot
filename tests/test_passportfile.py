@@ -16,11 +16,10 @@
 #
 # You should have received a copy of the GNU Lesser Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
-
 import pytest
 
 from telegram import PassportFile, PassportElementError, Bot, File
-from tests.conftest import check_shortcut_signature, check_shortcut_call
+from tests.conftest import check_shortcut_signature, check_shortcut_call, check_defaults_handling
 
 
 @pytest.fixture(scope='class')
@@ -40,6 +39,15 @@ class TestPassportFile:
     file_size = 50
     file_date = 1532879128
 
+    def test_slot_behaviour(self, passport_file, mro_slots, recwarn):
+        inst = passport_file
+        for attr in inst.__slots__:
+            assert getattr(inst, attr, 'err') != 'err', f"got extra slot '{attr}'"
+        assert not inst.__dict__, f"got missing slot(s): {inst.__dict__}"
+        assert len(mro_slots(inst)) == len(set(mro_slots(inst))), "duplicate slot"
+        inst.custom, inst.file_id = 'should give warning', self.file_id
+        assert len(recwarn) == 1 and 'custom' in str(recwarn[0].message), recwarn.list
+
     def test_expected_values(self, passport_file):
         assert passport_file.file_id == self.file_id
         assert passport_file.file_unique_id == self.file_unique_id
@@ -56,16 +64,14 @@ class TestPassportFile:
         assert passport_file_dict['file_date'] == passport_file.file_date
 
     def test_get_file_instance_method(self, monkeypatch, passport_file):
-        get_file = passport_file.bot.get_file
-
         def make_assertion(*_, **kwargs):
-            result = kwargs['file_id'] == passport_file.file_id and check_shortcut_call(
-                kwargs, get_file
-            )
+            result = kwargs['file_id'] == passport_file.file_id
             # we need to be a bit hacky here, b/c PF.get_file needs Bot.get_file to return a File
             return File(file_id=result, file_unique_id=result)
 
         assert check_shortcut_signature(PassportFile.get_file, Bot.get_file, ['file_id'], [])
+        assert check_shortcut_call(passport_file.get_file, passport_file.bot, 'get_file')
+        assert check_defaults_handling(passport_file.get_file, passport_file.bot)
 
         monkeypatch.setattr(passport_file.bot, 'get_file', make_assertion)
         assert passport_file.get_file().file_id == 'True'

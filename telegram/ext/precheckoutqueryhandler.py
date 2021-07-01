@@ -17,14 +17,15 @@
 # You should have received a copy of the GNU Lesser Public License
 # along with this program.  If not, see [http://www.gnu.org/licenses/].
 """This module contains the PreCheckoutQueryHandler class."""
-from typing import Any
+
 
 from telegram import Update
 
 from .handler import Handler
+from .utils.types import CCT
 
 
-class PreCheckoutQueryHandler(Handler[Update]):
+class PreCheckoutQueryHandler(Handler[Update, CCT]):
     """Handler class to handle Telegram PreCheckout callback queries.
 
     Note:
@@ -82,7 +83,9 @@ class PreCheckoutQueryHandler(Handler[Update]):
 
     """
 
-    def check_update(self, update: Any) -> bool:
+    __slots__ = ()
+
+    def check_update(self, update: object) -> bool:
         """Determines whether an update should be passed to this handlers :attr:`callback`.
 
         Args:
