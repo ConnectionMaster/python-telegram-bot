@@ -1,0 +1,5 @@
+other = "Bump virtualenv from 20.35.4 to 20.36.1"
+[[pull_requests]]
+uid = "71"
+author_uids = ["dependabot[bot]"]
+closes_threads = []
