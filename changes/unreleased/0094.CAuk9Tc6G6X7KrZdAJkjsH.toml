@@ -1,0 +1,5 @@
+other = "Bump cryptography from 46.0.5 to 46.0.6"
+[[pull_requests]]
+uid = "94"
+author_uids = ["dependabot[bot]"]
+closes_threads = []
