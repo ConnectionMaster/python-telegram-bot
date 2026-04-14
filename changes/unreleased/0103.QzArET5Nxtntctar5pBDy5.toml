@@ -1,0 +1,5 @@
+other = "Bump pytest from 9.0.2 to 9.0.3"
+[[pull_requests]]
+uid = "103"
+author_uids = ["dependabot[bot]"]
+closes_threads = []
