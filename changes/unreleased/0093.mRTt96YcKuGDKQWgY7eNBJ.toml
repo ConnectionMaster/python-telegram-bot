@@ -1,0 +1,5 @@
+other = "Bump requests from 2.32.5 to 2.33.0"
+[[pull_requests]]
+uid = "93"
+author_uids = ["dependabot[bot]"]
+closes_threads = []
